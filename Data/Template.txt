@@ -1,0 +1,1 @@
+ID Estensimetro,F applicata (kgf),Allungamento,Ritorno

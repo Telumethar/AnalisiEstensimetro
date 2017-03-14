@@ -14,7 +14,7 @@ vector <string> parseRow(string riga, string delimiter = ",");
 struct SerieMisurazioni {
   int materiale, id_estensimetro;
   double L0, err_L0, d, err_d;
-  
+
   vector <double> forza_applicata, allungamento, compressione;
 
   bool getParametri(string nomefile) {
@@ -32,35 +32,62 @@ struct SerieMisurazioni {
 
 int main (void) {
   //Apriamo il file con le misure
-  ifstream filemisure("...");
+  ifstream filemisure("Data/DatiEstensimetro.csv");
 
-  if (!filemisure) {
-    //
+  if (!filemisure) { //Controllo eventuali errori nella lettura del file delle misure
+    cout << "Errore Input\n";
+    return 1;
   }
 
-  //Ciclo che scorre righe, ogni riga viene mandata alla funzione parseRow. Ciclo interno che scorre le celle di ogni riga,
-  //
+
+
+  //Ciclo che scorre righe, ogni riga viene mandata alla funzione parseRow, che la divide in celle.
+  //Basandomi sugli ID, che leggo nella prima cella di ogni riga, creo delle SerieMisurazioni per ogni ID unico
+  //Quindi leggo e inserisco i dati all'interno di ogni struct
+  //Alla fine avrò un vettore di SerieMisurazioni, con ciascun elemento che costituiscce una singola serie di dati prelevati dallo stesso estensimetro
   string riga;
   vector <SerieMisurazioni> misurazioni;
+  int nserie = 0-1;
 
   string saved_id_estensimetro = "?";
-  while (filemisure << riga) { //Per ogni riga
-    vector <string> celle_riga = parseRow(riga);
-    string actual_id_estensimetro = celle_riga[0];
-    if (saved_id_estensimetro != actual_id_estensimetro) {
-      //Cambia la serie
-      //Crea la nuova serie e la inizializza
-      misurazioni[i].forza_applicata.push_back(stod(celle_riga[1]));
-      misurazioni[i].allungamento.push_back(stod(celle_riga[2]));
-      misurazioni[i].compressione.push_back(stod(celle_riga[3]));
+
+  while (filemisure >> riga) { //Per ogni riga
+    vector <string> celle_riga = parseRow(riga); //Divido la riga in celle
+    //cout << celle_riga[0] << endl;
+    string actual_id_estensimetro = celle_riga[0]; //Prelevo dalla prima cella l'attuale ID dell'estensimetro
+    if (saved_id_estensimetro != actual_id_estensimetro) { //Se è cambiata la serie di misurazioni (ovvero se è cambiato l'estensimetro che sto usando)
+      //Crea la nuova serie e la Inizializzo
+      misurazioni.push_back(SerieMisurazioni()); //SerieMisurazioni() crea una nuova variabile del tipo di quella struttura, che inserisco in fondo al vettore
+      ++nserie; //Ora c'è una serie in più!
+      misurazioni[nserie].id_estensimetro = stoi(celle_riga[0]); //Imposto già l'ID dell'estensimetro
+
+      //misurazioni[nserie].getParametri("Data/ParametriEstensimetri.csv"); //Invoco la funzione che imposta i parametri, ora che ho già sistemato l'ID
+
+      //E poi inserisco dentro i primi dati
+      //cout << celle_riga[1] << " " << celle_riga[2] << " " << celle_riga[3] << endl;
+      misurazioni[nserie].forza_applicata.push_back(stod(celle_riga[1]));
+      misurazioni[nserie].allungamento.push_back(stod(celle_riga[2]));
+      misurazioni[nserie].compressione.push_back(stod(celle_riga[3]));
 
       saved_id_estensimetro = actual_id_estensimetro;
     } else {
       //Sono nella stesse serie di prima
       //Aggiungo i nuovi dati
+      misurazioni[nserie].forza_applicata.push_back(stod(celle_riga[1]));
+      misurazioni[nserie].allungamento.push_back(stod(celle_riga[2]));
+      misurazioni[nserie].compressione.push_back(stod(celle_riga[3]));
     }
   }
 
+  //DEBUG Stampa tutto
+  for (auto &serie: misurazioni) {
+    cout << serie.id_estensimetro << "-----\n";
+    cout << "Forza\tAllung\tCompres\n";
+    for (int i = 0; i < serie.forza_applicata.size(); ++i) {
+      cout << serie.forza_applicata[i] << "\t" << serie.allungamento[i] << "\t" << serie.compressione[i] << "\n";
+    }
+    cout << "\n\n\n";
+  }
 
   return 0;
 }
